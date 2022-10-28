@@ -1,6 +1,6 @@
 rm(list = ls())
 library(tidyverse)
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 
 obs_sites = read_csv("data/processed/obs_data.csv") %>%
