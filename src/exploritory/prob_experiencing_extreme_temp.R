@@ -1,6 +1,6 @@
 gc()
 rm(list = ls())
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 source('src/models/marginal_models/gpd_models.R')
 library(tidyverse)
 
