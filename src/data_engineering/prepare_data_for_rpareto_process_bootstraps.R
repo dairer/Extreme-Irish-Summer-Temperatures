@@ -2,7 +2,7 @@ rm(list = ls())
 gc()
 library(tidyverse)
 
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 prep_rpareto_bts = function(marg_mod, bts_range, num_quantiles){
 
