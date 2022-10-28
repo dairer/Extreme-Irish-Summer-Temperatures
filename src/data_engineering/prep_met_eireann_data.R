@@ -1,7 +1,6 @@
 rm(list=ls())
 library(tidyverse)
-setwd("~/met-eireann-data/updated_data/")
-#setwd("~/met-eireann-data/data/")
+setwd("~/Extreme-Irish-Summer-Temperatures/data/met-eireann-data/")
 
 all_data = list.files() %>%
   paste0(.,'/',.,'.csv') %>%
