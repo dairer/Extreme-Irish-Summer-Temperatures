@@ -6,7 +6,7 @@ library(evgam)
 library(mgcv)
 library(raster) # package for netcdf manipulation
 
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 
 my_pal = c( 
