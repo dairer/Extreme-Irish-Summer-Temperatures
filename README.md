@@ -1,5 +1,5 @@
 # Inference for extreme spatial temperature events in a changing climate with application to Ireland
-Here is the code for the paper "Inference for extreme spatial temperature events in a changing climate with application to Ireland", which you can read on arXiv. Feel free to use/adapt this code :) I cannot publish the data analysed for this project in this repository but details on how to download it are [here](#downloading-data). To get an overview of the project structure you can jump down here to the [file tree](#file-tree).
+Here is the code for the paper "_Inference for extreme spatial temperature events in a changing climate with application to Ireland_", which you can read on arXiv. Feel free to use/adapt this code :) I cannot publish the data analysed for this project in this repository but details on how to download it are [here](#downloading-data). To get an overview of the project structure you can jump down here to the [file tree](#file-tree).
 
 
 ## Downloading data
