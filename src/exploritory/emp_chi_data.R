@@ -1,6 +1,6 @@
 rm(list = ls())
 library(tidyverse)
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 site_pairs = read_csv("data/processed/obs_pairs_with_dist.csv")
 site_pairs$V2 %>% unique %>% length
