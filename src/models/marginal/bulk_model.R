@@ -1,13 +1,10 @@
-# # Author: Dáire Healy
-# # Date: 17 Feb 2022
-# 
-# Fits and saves quantile regression model and lambda estimates
+# This script fits and saves quantile regression model and lambda estimates
+
 gc()
 rm(list = ls())
-
 library(tidyverse)
 library(evgam)
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 num_quantiles = 25
 obs_data = readRDS(paste0("data/processed/obs_data_for_bulk_model_num_quantiles_",num_quantiles,".csv"))
