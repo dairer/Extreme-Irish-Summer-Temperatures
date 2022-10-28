@@ -13,8 +13,8 @@ Here is the code for the paper "Inference for extreme spatial temperature events
 
 
 ### Covariates
-- The global mean temperature used in our analyis can be downloaded from [HadCRUT](https://crudata.uea.ac.uk/cru/data/temperature/).
-- Data from Irish C0$_2$ emissions can be downloaded from [Our World in Data](https://github.com/owid/co2-data).
+- Temerature anomolies can be downloaded from [HadCRUT](https://crudata.uea.ac.uk/cru/data/temperature/).
+- Data from Irish C02 emissions can be downloaded from [Our World in Data](https://github.com/owid/co2-data).
 
 ## Using the code
 --------------------- 
