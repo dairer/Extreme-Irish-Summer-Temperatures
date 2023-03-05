@@ -7,8 +7,6 @@ library(mgcv)
 library(raster) # package for netcdf manipulation
 
 setwd("~/Extreme-Irish-Summer-Temperatures/")
-
-
 my_pal = c( 
   '#062c30', # extra dark 
   '#003f5c',
@@ -26,11 +24,6 @@ ireland_sf <-rnaturalearth::ne_countries(type = "map_units",
                                          returnclass = 'sf', # spatial object
                                          continent = "europe") %>%
   .[.$name %in% c('Ireland', 'N. Ireland'),]
-
-
-
-# i. ========  ========  Global parameters ========  ========  ========
-# 
 
 # months to include in the analysis
 months_to_study = c(6,7,8)
@@ -50,8 +43,6 @@ proj_cords = proj_cords %>% sp::coordinates()/100000
 clim_data$Long.projected = proj_cords[,1]
 clim_data$Lat.projected = proj_cords[,2]
 clim_data$id = clim_data %>% group_indices(Long, Lat)
-
-
 
 
 ngll = function(par){
@@ -84,9 +75,6 @@ estiamte_scale_free_shape = function(x){
 
 
 
-
-
-
 # 3a. ---- Climate model
 clim_data_extreme_9 = clim_data %>%
   group_by(id) %>%
@@ -100,7 +88,6 @@ optimal_shape_9 = -0.1889558
 
 
 grid = read_csv('data/processed/clim_scale_grid.csv')
-
 
 scales_fixed_xi = c()
 loglik_fixed_xi = c()
@@ -125,16 +112,12 @@ for(i in grid$id){
 }
 
 
-
-
-
 grid$LL_null = loglik_fixed_xi
 grid$LL_alt = -loglik_free_xi
 grid$LL_ratio = -2*log(grid$LL_alt/grid$LL_null)
 
 
 plt_clim = grid %>%
-  filter(LL_ratio < 0.015) %>%
   ggplot()+
   geom_point(aes(Long, Lat, col = LL_ratio))+
   coord_map()+
@@ -146,20 +129,9 @@ plt_clim = grid %>%
   labs(col = '2ln(LR)', x = '', y = '')
 
 
-
-
-
-
-
-
 obs_dat = read_csv('data/processed/obs_data.csv') %>%
   mutate(excess = maxtp - threshold_9) %>%
   filter(excess>0)
-  
-
-
-
-
 
 loglik_sum = c()
 
@@ -182,8 +154,6 @@ for(potential_shape in seq(-0.2, -0.15, length.out = 100)){
 optimal_shape = seq(-0.2, -0.15, length.out = 100)[which.min(loglik_sum)]
 optimal_shape = -0.1737374
 
-
-
 loglik_fixed_xi = c()
 loglik_free_xi = c()
 
@@ -199,10 +169,6 @@ for(i in obs_grid$Station){
   # --- free shape
   loglik_free_xi = c(loglik_free_xi, (evd::fpot(this_extm_irel, threshold = 0) %>% logLik %>% as.numeric()))
 }
-
-
-
-
 
 obs_grid$LL_null = loglik_fixed_xi
 obs_grid$LL_alt = -loglik_free_xi
@@ -223,11 +189,5 @@ plt_obs = obs_grid %>%
 
 plt = gridExtra::grid.arrange(plt_clim, plt_obs, nrow = 1, widths = c(1, 0.95))
 
-
-
-
-
-
 ggsave(plot = plt, filename = 'output/figs/LRT.pdf', width = 7, height =3)
-
 

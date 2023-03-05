@@ -1,43 +1,16 @@
 rm(list = ls())
 library(tidyverse)
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/")
+setwd("~/Extreme-Irish-Summer-Temperatures/data/processed/")
 
-# --- Stations are very close, just keep station "DUBLIN (GLASNEVIN)"
-met_eireann = read.csv("met_eireann_data.csv") %>% as_tibble %>%
+met_eireann = read.csv("met_eireann_data.csv") %>% 
+  as_tibble %>%
   dplyr::select(loc_id,date,maxtp,Station,Lat,Long)
 
 met_eireann[met_eireann$Station == "DUBLIN (MERRION SQUARE)",]$loc_id = 3923 # --- we have 2 "DUBLIN (MERRION SQUARE)" sites in me_sites
 
-cs3 = read.csv("cs3_data.csv") %>%
-  dplyr::select(loc_id,date,maxtp,Station,Lat,Long)%>% 
-  filter(!(Station %in% c("DUBLIN (UPR.O'CONNELL ST.)",
-                          "DUBLIN (TRINITY COLL.)")))
-
-# --- remove cs3 sites that are already in met eireann synop data
-cs3 = cs3 %>%
-  filter(!(loc_id %in% met_eireann$loc_id))
-
-
-# ---- Join up 'CARLOW (AGR.RES.STN.)', 'CARLOW (OAK PARK)' and Oak_Park
-# doing this separately as there are 3 sites very close
-cs3 = cs3 %>%
-  filter(!(Station == 'CARLOW (AGR.RES.STN.)' & (lubridate::as_date(date)>=lubridate::as_date(min(cs3[cs3$Station == 'CARLOW (OAK PARK)',]$date))))) %>%
-  as_tibble() 
-cs3$Station[cs3$Station == 'CARLOW (AGR.RES.STN.)'] = 'CARLOW (OAK PARK)'
-
-cs3 = cs3 %>%
-  filter(!(Station == 'CARLOW (OAK PARK)' & (lubridate::as_date(date)>=lubridate::as_date(min(met_eireann[met_eireann$Station == "Oak_Park",]$date)))))
-cs3$Station[cs3$Station == 'CARLOW (OAK PARK)'] = 'Oak_Park'
-
-cs3$Long[cs3$Station == 'Oak_Park'] = met_eireann %>% filter(Station == "Oak_Park") %>% pull(Long) %>% .[1]
-cs3$Lat[cs3$Station == 'Oak_Park'] = met_eireann %>% filter(Station == "Oak_Park") %>% pull(Lat) %>% .[1]
-cs3$loc_id[cs3$Station == 'Oak_Park'] = met_eireann %>% filter(Station == "Oak_Park") %>% pull(loc_id) %>% .[1]
-
-
 ni = read.csv("NI_data.csv") %>% 
   as_tibble %>%
   dplyr::select(loc_id = id,date,maxtp,Station,Lat,Long)
-
 
 # ----- combine data
 obs_data = rbind(met_eireann,cs3,ni)
@@ -53,14 +26,12 @@ sites = obs_data %>%
   ungroup()
 
 
-
 # --- removing sites with very little data
 sites = sites %>%
   filter(num_obs > (365*5))
 
 obs_data = obs_data %>%
   filter(Station %in% sites$Station)
-
 
 # ------ Project to UTM
 my_coords = sites %>% dplyr::select(Long, Lat)
@@ -94,8 +65,6 @@ cluster_sites = function(my_sites, distance_epsilon){
   }
   clustered_sites %>% drop_na()
 }
-
-
 sites_to_cluster = cluster_sites(sites, 0.025)
 
 
@@ -153,8 +122,6 @@ for(i in seq(nrow(sites_to_cluster))){
   }
 }
 
-
-
 obs_data$Station = str_to_lower(obs_data$Station)
 
 sites = obs_data %>%
@@ -163,30 +130,6 @@ sites = obs_data %>%
             min_date = min(date),max_date = max(date)) %>%
   unique() %>%
   ungroup()
-
-
-
-
-# [1] "Combining sites Athenry and ATHENRY (MELLOWES AGR.COLL.)"
-# [1] "Combining sites BALLINACURRA and BALLINACURRA NO.2"
-# [1] "Combining sites Ballyhaise and BALLYHAISE (AGR.COLL.)"
-# [1] "Combining sites CAVAN (DRUMCONNICK) and CAVAN LORETO COLLEGE"
-# [1] "Combining sites DUBLIN (PHOENIX PARK) and PhoenixPark"
-# [1] "Combining sites DUNGARVAN (AGR.RES.STN.) and DUNGARVAN (CARRIGLEA)"
-# [1] "Combining sites Dunsany and DUNSANY (GRANGE)"
-# [1] "Combining sites FERMOY (MOORE PARK) and Moore_Park"
-# [1] "Combining sites GLENCOLUMBKILLE (CASHEL) and GLENCOLUMBKILLE (DRIMROE)"
-# [1] "Combining sites JOHNSTOWN CASTLE and JohnstownII"
-# [1] "Combining sites Kilkenny and KILKENNY_Greenshill"
-# [1] "Combining sites LULLYMORE (AGR.RES.STN.) and Lullymore_Nature_Centre"
-# [1] "Combining sites Markree and MARKREE CASTLE"
-# [1] "Combining sites MILFORD (VOC.SCH.) and MILFORD KILMACRENNAN ROAD"
-# [1] "Combining sites Newport and NEWPORT (FURNACE)"
-# [1] "Combining sites SHERKIN ISLAND and SherkinIsland"
-
-# 0.001 # 100 km
-# 0.001*100 # km
-# 0.001*1000 # meters
 
 my_coords = obs_data %>% dplyr::select(Long, Lat)
 sp::coordinates(my_coords)<- c("Long", "Lat")
@@ -206,11 +149,9 @@ obs_data = obs_data %>%
     "tuam (airglooney)", # ---- too, suspicious data
     "ballynahinch (for.stn.)" # data too pathcy/suspicious before this date
   )) %>%
-  filter(maxtp  < 35)# --- not a believable record)
-
+  filter(maxtp  < 35)# --- not a believable record
 
 obs_data %>%
   as_tibble() %>%
   unique() %>%
   write_csv("obs_all_data.csv")
-

@@ -2,14 +2,11 @@ rm(list = ls())
 library(tidyverse)
 setwd("~/Extreme-Irish-Summer-Temperatures/")
 
-
 obs_sites = read_csv("data/processed/obs_data.csv") %>%
   dplyr::select(Long, Lat, Station)
 
 extreme_date = read_csv("data/processed/clim_data_full.csv") %>%
   filter(date == "1991-07-15") 
-
-
 
 my_pal = c(
   '#062c30', # extra dark 
@@ -28,10 +25,6 @@ ireland_sf <-rnaturalearth::ne_countries(type = "map_units",
                                          returnclass = 'sf', # spatial object, change this to "sp" if needed, this will break the plot though
                                          continent = "europe") %>%
   .[.$name %in% c('Ireland', 'N. Ireland'),]
-
-
-
-
 
 
 my_plt_clim = extreme_date %>%
@@ -68,9 +61,6 @@ my_plt_obs = obs_sites %>%
        title = "",
        x = "Longitude",
        y = "Latitude")
-
-
-
 
 my_plt = gridExtra::grid.arrange(my_plt_obs, my_plt_clim, nrow = 1)
 

@@ -1,10 +1,8 @@
-# Author: Dáire Healy
-# Date: 17 Feb 2022
 
 # Description: This script prepares observational temperature data for marginal 
 # modelling. This involves incorporating all covariates as descriped in the 
 # paper associated to this work.
-# Note: bulk modelling in preformed in this script. 
+
 gc()
 rm(list = ls())
 library(tidyverse)
@@ -13,9 +11,9 @@ library(evgam)
 library(mgcv)
 library(raster) # package for netcdf manipulation
 
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
-# i. ========  ========  Global parameters ========  ========  ========
+# ========  ========  Global parameters ========  ========  ========
 # 
 # # marginal threshold 
 marg_thresh_quantile = 0.8 # equiv to 95th quantile of highest 1/4 of data
@@ -26,11 +24,9 @@ months_to_study = c(6,7,8)
 potential_shape_values_climate = seq(-0.2, -0.15, length.out = 250)
 #quantiles_to_estimate_bulk = seq(0.01, 0.99, length.out = 300)
 
-refit_clim_shape_param = F
 
-
-# # 1. ========  ========  Read in all data  ========  ========  ======== 
-# 1a. ---- for plotting 
+# # ========  ========  Read in all data  ========  ========  ======== 
+#  ---- for plotting 
 # colour palatte 
 my_pal = c( 
   '#062c30', # extra dark 
@@ -50,7 +46,7 @@ ireland_sf <-rnaturalearth::ne_countries(type = "map_units",
                                          continent = "europe") %>%
   .[.$name %in% c('Ireland', 'N. Ireland'),]
 
-# 1b. ---- observational data
+#  ---- observational data
 obs_data = read_csv("data/processed/obs_all_data.csv") %>%
   mutate(year = lubridate::year(date)) %>%
   filter(lubridate::month(date) %in% months_to_study) # just take summer months
@@ -59,9 +55,8 @@ obs_data = read_csv("data/processed/obs_all_data.csv") %>%
 remove.stations = obs_data %>% group_by(Station) %>% summarise(n = n()) %>% arrange(n) %>% filter(n < 100) %>% pull(Station)
 obs_data = obs_data %>% filter(!Station %in% remove.stations)
 
-
-# # 1b. ---- climate data
-historic = vroom("~/JRSS_organised_code/data/raw_data/clim/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU).csv")
+# ---- climate data
+historic = vroom("~/Extreme-Irish-Summer-Temperatures/data/raw_data/clim/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU).csv")
 clim_data = historic %>%
   filter(lubridate::month(date) %in% months_to_study) # only take summer months
 rm(list = c('historic')) # clear memory
@@ -77,9 +72,8 @@ clim_data$Long.projected = proj_cords[,1]
 clim_data$Lat.projected = proj_cords[,2]
 clim_data$id = clim_data %>% group_indices(Long, Lat)
 clim_data %>% write_csv("data/processed/full_clim_data.csv")
-# --- delete --- clim_data= read_csv("~/JRSS_organised_code/corrections/data/processed_data/full_clim_data.csv")
 
-# 1c. Add temporal covariates (HADCRUT5)
+# Add temporal covariates (HADCRUT5)
 hadcrut_data = raster::brick("data/raw/miscl/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc")
 
 hadcrut_loc_dat = raster::coordinates(hadcrut_data) %>% as_tibble()
@@ -92,7 +86,6 @@ names(hadcrut_data) = names(hadcrut_data) %>% str_remove_all("X")
 hadcrut_data = hadcrut_data %>%
   tidyr::pivot_longer(c(-Long, -Lat), names_to = "date", values_to = "temp_anom") %>% # Making each row an observation
   mutate(date = date %>% lubridate::ymd())
-
 
 irealnd_hadcrut = hadcrut_data %>%
   filter(Long > -11, Long < -6,   Lat > 50, Lat < 56) %>%
@@ -121,10 +114,7 @@ irealnd_hadcrut$loess_glob_temp_anom = loess_glob_preds$fit
 irealnd_hadcrut$loess_glob_temp_anom_u = loess_glob_preds$fit+1.96*(loess_glob_preds$se.fit)
 irealnd_hadcrut$loess_glob_temp_anom_l = loess_glob_preds$fit-1.96*(loess_glob_preds$se.fit)
 
-
-
-
-# ----- PLOTS 
+# ----- plots of covariate
 had_crut_yearly_dat_plot = irealnd_hadcrut %>%
   ggplot()+
   geom_ribbon(aes(x = year,ymin = loess_temp_anom_l, ymax = loess_temp_anom_u, fill = 'Ireland'), alpha = 0.25)+
@@ -141,7 +131,6 @@ had_crut_yearly_dat_plot = irealnd_hadcrut %>%
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 
 
-
 europe_sf <-rnaturalearth::ne_countries(type = "map_units",
                                         scale='large', # resolution of map
                                         returnclass = 'sf')
@@ -153,7 +142,6 @@ hadcrut_map = hadcrut_data %>%
   filter(date == "1991-07-16") %>%
   ggplot() +
   geom_tile(aes(Long, Lat, fill = temp_anom)) +
-  #geom_tile(aes(Long, Lat), col = 'black') +
   viridis::scale_fill_viridis() +
   geom_sf(data = europe_sf, alpha = 0, col = 'black', size = 0.5)+
   geom_point(data =  hadcrut_data %>%
@@ -168,7 +156,7 @@ hadcrut_map = hadcrut_data %>%
         axis.text.y = element_blank())
 
 hadcrut_plts = gridExtra::grid.arrange(had_crut_yearly_dat_plot, hadcrut_map, nrow = 1)
-ggsave(hadcrut_plts, filename = "~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/figs/hadcrut_plots.pdf",
+ggsave(hadcrut_plts, filename = "~/Extreme-Irish-Summer-Temperatures/output/figs/hadcrut_plots.pdf",
        height = 3.5, width = 9)
 
 obs_data = obs_data %>%
@@ -176,7 +164,7 @@ obs_data = obs_data %>%
                dplyr::select(year, loess_temp_anom, loess_glob_temp_anom) %>%
                unique()), by = 'year')
 
-# 1d. get climate subset that matches up with observational stations 
+# get climate subset that matches up with observational stations 
 #  ------- calculate the distance between two points
 dist_h <- function(long1, lat1, long2, lat2) {
   sqrt((long1 - long2)^2 + (lat1 - lat2)^2)
@@ -226,9 +214,6 @@ clim_thresh_values = clim_data %>%
 obs_data = obs_data %>%
   left_join(clim_thresh_values)
 
-
-
-
 qunatile_model <-  maxtp ~ clim_thresh_value_9
 qunatile_model_fit <- evgam(qunatile_model, obs_data, family = "ald", ald.args = list(tau = 0.9))
 obs_data$threshold_9 = qunatile_model_fit$location$fitted
@@ -236,21 +221,16 @@ qunatile_model_fit %>% saveRDS("output/threshold_model_9")
 
 
 
-
-
-# 3. ========  ========  Tail Model        ========  ========  ======== 
+# ========  ========  Tail Model        ========  ========  ======== 
 print("model climate tail")
 
-
-# 3a. ---- Climate model
+# ---- Climate model
 clim_data_extreme_9 = clim_data %>%
   group_by(id) %>%
   mutate(threshold = quantile(maxtp, 0.9),
          excess = maxtp - threshold) %>%
   filter(excess > 0) %>%
   ungroup()
-
-
 
 ngll = function(par){
   if(par <= 0) return(2^30)
@@ -268,41 +248,26 @@ estiamte_scale_fixed_shape = function(x,shape_c){
 
 # fit scale parameter to each location with constant shap
 num_sites = clim_data_extreme_9$id %>% unique()
+scales = c()
+loglik_sum = c()
 
-
-if(refit_clim_shape_param){
-  scales = c()
-  loglik_sum = c()
+for(potential_shape in potential_shape_values_climate){
+  print(potential_shape)
   
-  for(potential_shape in potential_shape_values_climate){
-    print(potential_shape)
-    
-    loglik = c()
+  loglik = c()
 
-    for(i in (clim_data_extreme_9$id %>% unique())){
-      this_clim_extm_irel = clim_data_extreme_9 %>% filter(id == i) %>% pull(excess)
+  for(i in (clim_data_extreme_9$id %>% unique())){
+    this_clim_extm_irel = clim_data_extreme_9 %>% filter(id == i) %>% pull(excess)
 
-      model_fit = estiamte_scale_fixed_shape(this_clim_extm_irel, potential_shape)
+    model_fit = estiamte_scale_fixed_shape(this_clim_extm_irel, potential_shape)
 
-      scales = c(scales, model_fit$par)
-      loglik = c(loglik, model_fit$value)
+    scales = c(scales, model_fit$par)
+    loglik = c(loglik, model_fit$value)
 
-    }
-    loglik_sum = c(loglik_sum, sum(loglik))
   }
-  
-  optimal_shape = potential_shape_values_climate[which.min(loglik_sum)]
-
-  #optimal_shape =-0.2038076
-  
-}else{
-  # optimal_shape_8 = -0.2038076
-  optimal_shape_9 = -0.1889558
-  #optimal_shape_925 = -0.1753507
-  #optimal_shape =-0.2038076
+  loglik_sum = c(loglik_sum, sum(loglik))
 }
-
-
+optimal_shape = potential_shape_values_climate[which.min(loglik_sum)]
 
 scales_9 = c()
 for(i in (clim_data_extreme_9$id %>% unique())){
@@ -312,32 +277,13 @@ for(i in (clim_data_extreme_9$id %>% unique())){
 }
 
 
-# clim_data_extreme_8 %>% 
-#   dplyr::select(Long, Lat, id) %>%
-#   unique() %>% 
-#   mutate(scale_8 = scales_8,
-#          scale_9 = scales_9,
-#          scale_925 = scales_925) %>%
-#   pivot_longer(-c(Long, Lat, id)) %>%
-#   rename(thresh_val = name) %>%
-#   ggplot()+
-#   geom_point(aes(Long, Lat, col = value), size = 2.5)+
-#   geom_sf(data = ireland_sf, alpha = 0, col = 'black')+
-#   ggplot2::scale_color_gradientn(colors = my_pal)+
-#   facet_wrap(~thresh_val)+
-#   theme_minimal(12)+
-#   labs(col = expression(sigma))
-
-
-
-# 
+# --- save estimates on climate grid
 clim_data_extreme_9 %>%
   dplyr::select(Long, Lat, id, Long.projected, Lat.projected) %>%
   unique() %>%
   mutate(scale_9 = scales_9) %>%
   write_csv("data/processed/clim_scale_grid.csv")
-# 
-# # 
+
 obs_sites = obs_sites %>%
   left_join(clim_data_extreme_9 %>%
               dplyr::select(Long, Lat, id, Long.projected, Lat.projected) %>%
@@ -345,18 +291,6 @@ obs_sites = obs_sites %>%
               mutate(scale_9 = scales_9) %>%
               dplyr::select(id, scale_9), by = 'id')
 
-
-# obs_sites %>%
-#   ggplot()+
-#   geom_point(aes(Long, Lat, col = scale_8), size = 2.5)+
-#   geom_sf(data = ireland_sf, alpha = 0, col = 'black')+
-#   ggplot2::scale_color_gradientn(colors = my_pal)+
-#   theme_minimal(12)+
-#   labs(col = expression(sigma))
-# 
-# 
-obs_data = obs_data %>%
-  left_join(obs_sites)
-
-
-obs_data %>% write_csv("data/processed/obs_data.csv")
+obs_data %>%
+  left_join(obs_sites) %>% 
+  write_csv("data/processed/obs_data.csv")

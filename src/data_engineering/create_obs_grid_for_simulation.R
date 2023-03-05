@@ -1,7 +1,5 @@
 rm(list=ls())
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
-
-
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 # remove sites that are too close to simualte
 obs_sites_1 = read_csv("data/processed/obs_data_dist_to_sea.csv") %>% 
@@ -39,13 +37,11 @@ for(i in seq(nrow(obs_sites_1))){
 }
 
 
-
 sites_to_simulate = tibble(s1 = obs_sites_1$Station, s2 = closest_irel, dist_smallest) %>%
   arrange(desc(dist_smallest)) %>%
   head(86) 
 
 sites_to_keep = c(sites_to_simulate$s1, sites_to_simulate$s2) %>% unique
-
 
 
 sites_to_sim = read_csv("data/processed/obs_data_dist_to_sea.csv") %>% 
@@ -56,5 +52,5 @@ locs_to_pred = sites_to_sim %>%
   as.data.frame()
 
 
-
-list(sites_to_sim = sites_to_sim, locs_to_pred = locs_to_pred) %>% saveRDS("data/processed/obs_grid_to_simulate")
+list(sites_to_sim = sites_to_sim, locs_to_pred = locs_to_pred) %>% 
+  saveRDS("data/processed/obs_grid_to_simulate")

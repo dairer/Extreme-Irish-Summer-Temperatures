@@ -6,7 +6,7 @@ library(tidyverse)
 library(evgam)
 setwd("~/Extreme-Irish-Summer-Temperatures/")
 
-num_quantiles = 25
+num_quantiles = 30
 obs_data = readRDS(paste0("data/processed/obs_data_for_bulk_model_num_quantiles_",num_quantiles,".csv"))
 
 # ---- get covariates for prediction
@@ -128,7 +128,7 @@ lambda_thresh_ex %>%
 # ------------ get splines on clim scale
 
 clim_grid = read_csv("data/processed/clim_scale_grid.csv")
-clim_dat_full = read_csv("~/JRSS_organised_code/corrections/data/processed_data/full_clim_data.csv")
+clim_dat_full = read_csv("~/Extreme-Irish-Summer-Temperatures/data/processed_data/full_clim_data.csv")
 
 # estimate empiracle quantules for climate data
 clim_quantiles = clim_dat_full %>%
@@ -177,8 +177,6 @@ for(i in seq(nrow(clim_grid))){
            Long.projected = clim_grid[i,]$Long.projected,
            Lat.projected = clim_grid[i,]$Lat.projected,
            id = clim_grid[i,]$id,
-           # threshold = clim_grid[i,]$threshold,
-           # clim_scale = clim_grid[i,]$clim_scale,
            quantile = clim_grid[i,]$quantile,
            value = clim_grid[i,]$value) 
   

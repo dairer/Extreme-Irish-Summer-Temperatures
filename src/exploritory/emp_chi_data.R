@@ -14,7 +14,6 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
   
   for(file_name in bts_range){
     
-    print("HEREERERERERERE")
     print(file_name)
     
     bts_lambda = read_csv(paste0("output/bts_thresh_ex_lambda/bootstrapped_threshold_exceedence_lambda_",marg_mod,"_num_quantiles_",num_quantiles,"_bts_", file_name,".csv"),
@@ -24,7 +23,6 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
     
     
     obs_data = read_csv("data/processed/obs_data.csv") %>%
-      #left_join(read_csv("data/processed/thresh_exceedance_lambda.csv"))  %>% # --- needs to change with bts
       left_join(bts_lambda) %>%
       left_join(read_csv("data/processed/obs_data_dist_to_sea.csv") %>% dplyr::select(Station, dist_sea))
     
@@ -32,11 +30,9 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
       dplyr::select(Station, year, scale_9, threshold_9, thresh_exceedance_9, loess_temp_anom, dist_sea, Long, Lat, Long.projected, Lat.projected) %>%
       unique() 
 
-    #obs_smoothed_quantiles = readRDS(paste0("output/bulk_model_fits/",marg_mod,"_num_quantiles_",num_quantiles,"_bts_", file_name))
-    
-    this_data <- readRDS(paste0("data/processed/bootstrap_data/bts_under_gpd_models/num_quantiles_50_bts_", file_name))%>%
+    this_data <- readRDS(paste0("data/processed/bootstrap_data/bts_under_gpd_models/num_quantiles_30_bts_", file_name))%>%
       mutate(year = lubridate::year(date)) %>%
-      rename(maxtp = maxtp_4) %>%
+      rename(maxtp = maxtp_2) %>%
       dplyr::select(-c(maxtp_2, maxtp_1)) %>%
       left_join(covariates %>% dplyr::select(-c(scale_9, threshold_9)), by = c('year', 'Station'))%>%
       filter(maxtp>0)
@@ -51,13 +47,13 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
     this_data$order = seq(nrow(this_data)) # remember the original order of the data
     
     
-    this_fit_mod = read_csv("output/gpd_model_fits/model_4_pars_corrected.csv",
+    this_fit_mod = read_csv("output/gpd_model_fits/model_2_pars_corrected.csv",
                             col_names = c("bts", "b0", "b1", "b2","b3","b4","xi")) %>% 
-      mutate(bts =  gsub("num_quantiles_50_bts_","", bts) %>% as.numeric()) %>%
+      mutate(bts =  gsub("num_quantiles_30_bts_","", bts) %>% as.numeric()) %>%
       filter(bts == file_name) %>%
       unlist() %>% as.numeric %>% .[2:length(.)]
     
-    pred <- my_predict_4b(this_fit_mod, this_data$scale_9, this_data$loess_temp_anom, this_data$dist_sea)
+    pred <- my_predict_2b(this_fit_mod, this_data$scale_9, this_data$loess_temp_anom, this_data$dist_sea)
     
     this_data$scale = pred$scale
     this_data$shape = pred$shape
@@ -81,14 +77,13 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
           res[data > threshold] = 1 - my_lambda[data > threshold]*(1-evd::pgpd((data[data > threshold] - threshold[data > threshold]), loc = 0,scale = scle[data > threshold], shape = shpe[1]))
         }
         
-        # this_quant_mod = obs_smoothed_quantiles %>%
-        #   filter(Station == .x$Station[1],
-        #          year == .x$year[1]) %>%
-        #   pull(quant_spline) %>%
-        #   .[[1]]
-        
-        #res[data <= threshold] = this_quant_mod(.x$maxtp[data <= threshold])       # 
-        res[data <= threshold] = myecdf(data[data <= threshold])
+        this_quant_mod = obs_smoothed_quantiles %>%
+          filter(Station == .x$Station[1],
+                 year == .x$year[1]) %>%
+          pull(quant_spline) %>%
+          .[[1]]
+
+        res[data <= threshold] = this_quant_mod(.x$maxtp[data <= threshold])
         res[res<0]=0
         
         .x$unif = res
@@ -132,28 +127,28 @@ get_obs_chi = function(my_qnt, num_quantiles, bts_range, marg_mod){
 
 
 
-job::job({get_obs_chi(0.9, 25, seq(1, 50), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(51, 100), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(101, 150), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(151, 200), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(201, 250), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(251, 300), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(301, 350), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(351, 400), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(401, 450), 'mod_4')})
-job::job({get_obs_chi(0.9, 25, seq(451, 500), 'mod_4')})
+job::job({get_obs_chi(0.9, 25, seq(1, 50), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(51, 100), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(101, 150), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(151, 200), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(201, 250), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(251, 300), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(301, 350), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(351, 400), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(401, 450), 'mod_2')})
+job::job({get_obs_chi(0.9, 25, seq(451, 500), 'mod_2')})
 
 
-job::job({get_obs_chi(0.95, 25, seq(1, 50), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(51, 100), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(101, 150), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(151, 200), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(201, 250), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(251, 300), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(301, 350), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(351, 400), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(401, 450), 'mod_4')})
-job::job({get_obs_chi(0.95, 25, seq(451, 500), 'mod_4')})
+job::job({get_obs_chi(0.95, 25, seq(1, 50), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(51, 100), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(101, 150), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(151, 200), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(201, 250), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(251, 300), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(301, 350), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(351, 400), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(401, 450), 'mod_2')})
+job::job({get_obs_chi(0.95, 25, seq(451, 500), 'mod_2')})
 
 
 

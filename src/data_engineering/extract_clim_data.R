@@ -6,8 +6,6 @@ library(magrittr)
 library(ncdf4)
 library(raster)
 
-
-
 trans_to_longlat = function(rotated_long = 0, rotated_lat = 0, axis_long = -162, axis_lat = 39.25){
   alpha = (axis_lat + 90)
   beta = axis_long
@@ -40,8 +38,12 @@ trans_to_longlat = function(rotated_long = 0, rotated_lat = 0, axis_long = -162,
 }
 
 
-file.loc = "~/CORDEX-DATA-HISTORIC/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU)/"
-file.save = "~/CORDEX-DATA-HISTORIC/processed/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU).csv"
+
+setwd("~/Extreme-Irish-Summer-Temperatures/data/processed/")
+
+
+file.loc = "~/Extreme-Irish-Summer-Temperatures/data/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU)/"
+file.save = "~/Extreme-Irish-Summer-Temperatures/data/processed/r12i1p1-ICHEC-EC-EARTH-(Ireland)CLMcom-CLM-CCLM4-8-17 (EU).csv"
 
 my_files = list.files(file.loc)
 for(f in paste0(file.loc, my_files)){

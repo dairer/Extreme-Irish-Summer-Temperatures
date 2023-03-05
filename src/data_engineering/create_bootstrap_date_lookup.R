@@ -1,13 +1,10 @@
-# Author: Dáire Healy
-# Date: 18 Feb 2022
-
-# Description: This script samples blocks of time ans stores them in a list
+# Description: This script samples blocks of time and stores them in a list
 
 rm(list = ls())
 library(tidyverse)
 library(vroom)
 library(evgam)
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland")
+setwd("~/Extreme-Irish-Summer-Temperatures/")
 
 
 obs_data = read_csv("data/processed/obs_data.csv")
@@ -27,18 +24,13 @@ sites_by_date %>%
   saveRDS(paste0("data/processed/bootstrap_data/sites_by_date"))
 
 
-
-
-
 run_bts_lookup = function(bts_id){
   # i. ========  ========  Global parameters ========
-  # num_bootstraps = 2500
   obs_data = read_csv("data/processed/obs_data.csv")
   
   is.subset = function(A, B) all(A %in% B)
   
   sites_by_date = readRDS("data/processed/bootstrap_data/sites_by_date")
-  
   
   # groups of observed sites and dates they were observed
   site_groups_and_dates = sites_by_date %>% 
@@ -173,7 +165,6 @@ list.files("data/processed/bootstrap_data/temp/") %>%
   map(~{
     paste0('data/processed/bootstrap_data/temp/',.x) %>% print()
   })
-
 
 
 all_bts = c()

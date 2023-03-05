@@ -1,3 +1,4 @@
+# --- data used for validating r-paretp process
 
 locs_to_pred = read_csv("data/processed/obs_data_dist_to_sea.csv")
 site_pairs = as.data.frame(t(combn(locs_to_pred$Station , 2 )))

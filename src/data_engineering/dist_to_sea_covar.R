@@ -7,7 +7,7 @@ library(sf)
 library(raster)
 
 #obs_data = read_csv("data/processed_data/obs_data_w_clim.csv")
-obs_data = read_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/obs_data.csv")
+obs_data = read_csv("~/Extreme-Irish-Summer-Temperatures/data/processed/obs_data.csv")
 
 my_pal = c(
   '#062c30', # extra dark 
@@ -88,13 +88,12 @@ sites %>%
   geom_point(aes(Long, Lat, col = dist_sea))
 
 sites %>%
-  write_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/obs_data_dist_to_sea.csv")
+  write_csv("~/Extreme-Irish-Summer-Temperatures/data/processed/obs_data_dist_to_sea.csv")
 
 
 
 # -------- Add these covariates to tibble of clim data
-#clim_data = read_csv("data/processed_data/ireland_clim_extreme.csv")
-clim_data = read_csv("~/JRSS_organised_code/data/processed_data/ireland_clim_extreme.csv")
+clim_data = read_csv("~/Extreme-Irish-Summer-Temperatures/data/processed_data/ireland_clim_extreme.csv")
 
 irel_grid  = st_transform(grid,4326)
 df <- data.frame(dist_sea = as.vector(dist_sea)/1000,
@@ -133,6 +132,5 @@ sites %>%
   ggplot()+
   geom_point(aes(Long, Lat, col = dist_sea))
 
-
 sites %>%
-  write_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/clim_data_dist_to_sea.csv")
+  write_csv("~/Extreme-Irish-Summer-Temperatures/data/processed/clim_data_dist_to_sea.csv")

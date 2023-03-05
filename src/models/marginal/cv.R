@@ -1,19 +1,16 @@
-# Author: Dáire Healy
-# Date: 17 May 2022
 
 # Description: This script provides comparison between potential marginal GPD
 # models using bootstrapped AIC,BIC and log likelihood. Bootstraps are 
 # constructed to preserve spatial and temporal dependence.
 gc()
 rm(list = ls())
-source('~/JRSS_organised_code/corrections/marginal_models/tail/gpd_models.R')
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/")
+setwd("~/Extreme-Irish-Summer-Temperatures/data/processed/")
+source('marginal_models/tail/gpd_models.R')
 
 library(tidyverse)
 library(spatialsample)
 library(scoringRules)
 library(job)
-
 
 # colour palatte 
 my_pal = c( 
@@ -36,12 +33,9 @@ ireland_sf <-rnaturalearth::ne_countries(type = "map_units",
   .[.$name %in% c('Ireland', 'N. Ireland'),]
 
 
-# i. ========  ========  Global parameters ========
+# ========  ========  Global parameters ========
 
-
-#source("corrections/gdp_fns.R")
-
-# 1. ========  ========  Read in data  ========  ========
+# ========  ========  Read in data  ========  ========
 # Observational data with covariates
 obs_data = read_csv("obs_data.csv") %>%
   left_join(read_csv("obs_data_dist_to_sea.csv") %>% dplyr::select(Station, dist_sea), by = 'Station')
@@ -102,24 +96,16 @@ get_metrics = function(orig_dat, excess, quant, threshold,  pred_scale, pred_sha
   
   my_rmse = sqrt(mean((x-y)^2))
   scoring=0
-  #scoring = crps(y = excess, family = "gpd", location = 0, scale = pred_scale, shape = pred_shape[1], mass = 0) %>% mean
+  scoring = crps(y = excess, family = "gpd", location = 0, scale = pred_scale, shape = pred_shape[1], mass = 0) %>% mean
   return(paste0(ll, ",", ll_standardised, ",",my_rmse, ",", scoring))
 }
 
 
 
-
-
-
-
-
-#cv_method = "spatial-temporal"
-#cv_method = "10fold"
-
 run_cv = function(cv_method, thresh_qnt, obs_data, spatial_folds, get_metrics, num_spatial_folds = "NA", week_chunks="NA"){
   
-  source('~/JRSS_organised_code/corrections/marginal_models/tail/gpd_models.R')
-  setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/data/processed/")
+  setwd("~/Extreme-Irish-Summer-Temperatures/data/processed/")
+  source('marginal_models/tail/gpd_models.R')
   
   get_metrics = function(orig_dat, excess, quant, threshold,  pred_scale, pred_shape){
     likelihood_vals = evd::dgpd(x = excess, loc = 0, scale = pred_scale, shape = pred_shape, log = T)
@@ -154,38 +140,36 @@ run_cv = function(cv_method, thresh_qnt, obs_data, spatial_folds, get_metrics, n
     
     
     for(s in seq(num_spatial_folds)){
-      #for(t in seq(length(week_chunks))){
       for(t in week_chunks){
-        print(s)
-        print(t)
-        test = extreme_data %>% 
+
+          test = extreme_data %>% 
           filter(spatial_fold == s) %>%
           filter(week %in% t)
         
         train = extreme_data %>%
           anti_join(test)
         
-        this_fit_mod_1 = fit_mod_1(train$excess, train$scale_9)
-        this_fit_mod_2 = fit_mod_2(train$excess, train$scale_9, train$loess_temp_anom)
-        this_fit_mod_4b = fit_mod_4b(train$excess, train$scale_9, train$loess_temp_anom, train$dist_sea)
+        this_fit_mod_0 = fit_mod_0(train$excess, train$scale_9)
+        this_fit_mod_1 = fit_mod_1(train$excess, train$scale_9, train$loess_temp_anom)
+        this_fit_mod_2 = fit_mod_2(train$excess, train$scale_9, train$loess_temp_anom, train$dist_sea)
 
         # calculate scale parameter on climate grid
-        pred_1 = my_predict_1(this_fit_mod_1, test$scale_9)
-        pred_2 = my_predict_2(this_fit_mod_2, test$scale_9, test$loess_temp_anom)
-        pred_4b =my_predict_4b(this_fit_mod_4b, test$scale_9, test$loess_temp_anom, test$dist_sea)
+        pred_0 = my_predict_0(this_fit_mod_0, test$scale_9)
+        pred_1 = my_predict_1(this_fit_mod_1, test$scale_9, test$loess_temp_anom)
+        pred_2 =my_predict_2(this_fit_mod_2, test$scale_9, test$loess_temp_anom, test$dist_sea)
         
-        write.table(paste0("model.1", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_1$scale, pred_1$shape[1]),",",mean(t)),
-                    file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+        write.table(paste0("model.0", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_0$scale, pred_0$shape[1]),",",mean(t)),
+                    file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
                     sep = ",", append = TRUE, quote = FALSE,
                     col.names = FALSE, row.names = FALSE)
         
-        write.table(paste0("model.2", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_2$scale, pred_2$shape[1]),",",mean(t)),
-                    file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+        write.table(paste0("model.1", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_1$scale, pred_1$shape[1]),",",mean(t)),
+                    file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
                     sep = ",", append = TRUE, quote = FALSE,
                     col.names = FALSE, row.names = FALSE)
 
-        write.table(paste0("model.4b", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_4b$scale, pred_4b$shape[1]),",",mean(t)),
-                    file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+        write.table(paste0("model.2", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_2$scale, pred_2$shape[1]),",",mean(t)),
+                    file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/spatio_temporal_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
                     sep = ",", append = TRUE, quote = FALSE,
                     col.names = FALSE, row.names = FALSE)
       }
@@ -219,27 +203,27 @@ run_cv = function(cv_method, thresh_qnt, obs_data, spatial_folds, get_metrics, n
       test = extreme_data %>% filter(random_fold == i)
       train = extreme_data %>% filter(random_fold != i)
       
-      this_fit_mod_1 = fit_mod_1(train$excess, train$scale_9)
-      this_fit_mod_2 = fit_mod_2(train$excess, train$scale_9, train$loess_temp_anom)
-      this_fit_mod_4b= fit_mod_4b(train$excess, train$scale_9, train$loess_temp_anom, train$dist_sea)
+      this_fit_mod_0 = fit_mod_0(train$excess, train$scale_9)
+      this_fit_mod_1 = fit_mod_1(train$excess, train$scale_9, train$loess_temp_anom)
+      this_fit_mod_2= fit_mod_2(train$excess, train$scale_9, train$loess_temp_anom, train$dist_sea)
       
       # calculate scale parameter on climate grid
-      pred_1 = my_predict_1(this_fit_mod_1, test$scale_9)
-      pred_2 = my_predict_2(this_fit_mod_2, test$scale_9, test$loess_temp_anom)
-      pred_4b =my_predict_4b(this_fit_mod_4b, test$scale_9, test$loess_temp_anom, test$dist_sea)
+      pred_0 = my_predict_0(this_fit_mod_0, test$scale_9)
+      pred_1 = my_predict_1(this_fit_mod_1, test$scale_9, test$loess_temp_anom)
+      pred_2 =my_predict_2(this_fit_mod_2, test$scale_9, test$loess_temp_anom, test$dist_sea)
+      
+      write.table(paste0("model.0", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_0$scale, pred_0$shape[1])),
+                  file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+                  sep = ",", append = TRUE, quote = FALSE,
+                  col.names = FALSE, row.names = FALSE)
       
       write.table(paste0("model.1", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_1$scale, pred_1$shape[1])),
-                  file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+                  file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
                   sep = ",", append = TRUE, quote = FALSE,
                   col.names = FALSE, row.names = FALSE)
       
       write.table(paste0("model.2", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_2$scale, pred_2$shape[1])),
-                  file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
-                  sep = ",", append = TRUE, quote = FALSE,
-                  col.names = FALSE, row.names = FALSE)
-      
-      write.table(paste0("model.4b", ",", get_metrics(test$maxtp, test$excess, test$quant, test$threshold_9,  pred_4b$scale, pred_4b$shape[1])),
-                  file = paste0('~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
+                  file = paste0('~/Extreme-Irish-Summer-Temperatures/output/cv_res/ten_fold_cv_test_mod_n', str_remove(thresh_qnt, "0."), '.csv'),
                   sep = ",", append = TRUE, quote = FALSE,
                   col.names = FALSE, row.names = FALSE)
     }
@@ -248,67 +232,4 @@ run_cv = function(cv_method, thresh_qnt, obs_data, spatial_folds, get_metrics, n
 
 
 job::job({run_cv('10fold', 0.9, obs_data, get_metrics)}, import = c("obs_data", 'run_cv', "get_metrics"))
-
 job::job({run_cv('spatial-temporal', 0.9, obs_data, spatial_folds, get_metrics, num_spatial_folds, week_chunks)}, import = c("obs_data", 'run_cv', "spatial_folds",  "get_metrics", "num_spatial_folds", "week_chunks"))
-
-
-
-
-
-
-read_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/ten_fold_cv_test_mod_n9.csv",
-               col_names = c("model", "LL", "LLs", "RMSE", "CRPS")) %>%
-  group_by(model) %>% summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>% arrange(model)
-
-read_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/spatio_temporal_cv_test_mod_n9.csv",
-               col_names = c("model", "LL", "LLs", "RMSE", "CRPS", "t"))  %>%
-  group_by(model) %>% summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>% arrange(model)
-
-
-
-
-
-
-setwd("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/")
-
-
-read_csv("output/gpd_model_fits/model_4_pars_corrected.csv",
-         col_names = c("bts", "b0", "b1", 'b2', 'b3', 'b4', "xi")) %>%
-  pull(xi) %>% quantile(c(0.025, 0.975))
-
-read_csv("output/gpd_model_fits/model_4_true.csv") %>% pull(V6)
-
-
-
-
-read_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/ten_fold_cv_test_mod_n8.csv",
-         col_names = c("model", "LL", "LLs", "RMSE", "CRPS")) %>%
-  group_by(model) %>%
-  summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>%
-  arrange(model)
-
-
-read_csv("~/Inference for extreme spatial temperature events in a changing climate with application to Ireland/output/cv_res/spatio_temporal_cv_test_mod_n8.csv",
-         col_names = c("model", "LL", "LLs", "RMSE", "CRPS", "t"))  %>%
-  group_by(model) %>%
-  summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>%
-  arrange(model)
-
-
-
-# rbind(read_csv("~/JRSS_organised_code/corrections/data/processed_data/cv_res/ten_fold_cv_test_mod_n9.csv",
-#                col_names = c("model", "LL", "LLs", "RMSE", "CRPS"))) %>%
-#   group_by(model) %>%
-#   summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>%
-#   arrange(model)
-# 
-# rbind(read_csv("~/JRSS_organised_code/corrections/data/processed_data/cv_res/spatio_temporal_cv_test_mod_n9.csv",
-#                col_names = c("model", "LL", "LLs", "RMSE", "CRPS", "t")))  %>%
-#   group_by(model) %>%
-#   summarise(RMSE = mean(RMSE), CRPS = mean(CRPS)) %>%
-#   arrange(model)
-
-# choose model 1
-# model 2
-# model 3
-# model 4b
