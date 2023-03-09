@@ -88,6 +88,59 @@ for(temp_i_want in seq(25,36)){
 }
 
 
+
+# ---- alternative?
+
+m = length(my_simulations_standardised)
+L = 300
+sampled_rs = evd::rgpd(n=300, loc = 1, scale = 1, shape = 1)
+
+res_1942 = c()
+res_2020 = c()
+
+for(temp_i_want in seq(25,36)){
+  
+  print(temp_i_want)
+  # ---- temp on frechet scale
+  obs_grid$frechet = -1/log(1-obs_grid$thresh_exceedance_9*(1-evd::pgpd(temp_i_want - obs_grid$threshold_9,  scale = obs_grid$scale, shape =  obs_grid$shape[1] )) )
+  T_2020 = obs_grid %>% filter(year == 2020) %>% pull(frechet) 
+  T_1942 = obs_grid %>% filter(year == 1942) %>% pull(frechet) 
+  
+  T_1942[T_1942 == -Inf] = Inf
+  T_2020[T_2020 == -Inf] = Inf
+  
+  b_2020 = min(T_2020/max_at_each_site)
+  b_1942 = min(T_1942/max_at_each_site)
+  
+  m = length(my_simulations_standardised)
+  
+  above_1942 = 0
+  above_2020 = 0
+  
+  # simulate 25000 costs
+  
+  # for each simulation
+  for(j in seq(length(my_simulations_standardised))){
+    # for each imp samp
+    for(k in seq(L)){
+      
+      tmp = my_simulations_standardised[[j]]*sampled_rs[k]
+      
+      above_2020 = above_2020 + sum(sum(tmp*b_2020 > T_2020) > 0)
+      above_1942 = above_1942 + sum(sum(tmp*b_1942 > T_1942) > 0)
+    }
+  }
+  
+  tibble(temp = temp_i_want, 
+         p_1942 = above_1942 / (length(my_simulations_standardised)*L*b_1942),
+         p_2020 = above_2020 / (length(my_simulations_standardised)*L*b_2020)) %>%
+    write_csv("output/prob_extreme_temp_imp_samp_tesseesset.csv", append = T)
+  
+}
+
+
+# ----- plot figures
+
 read_csv("output/prob_extreme_temp_imp_samp_mod_2.csv",
          col_names = c('bts','temp', 'p_1942', 'p_2020')) %>%
   filter(temp<=35, temp>25) %>%
